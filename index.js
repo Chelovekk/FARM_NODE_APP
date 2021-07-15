@@ -1,7 +1,9 @@
+const { json } = require('express')
 const express = require('express')
-const config = require('config')
 const app = express()
 const router = require('./routes/user.route')
+
+app.use(json())
 
 app.use('/api', router)
 
