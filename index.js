@@ -3,9 +3,7 @@ const express = require('express');
 const app = express();
 const userRouter = require('./routes/user.route');
 const achievementRouter = require('./routes/achievement.route');
-const events = require('events');
 
-var emit = new events.EventEmitter();
 
 
 app.use(json());
