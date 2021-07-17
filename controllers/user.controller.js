@@ -1,4 +1,4 @@
-const db = require('../db')
+const db = require('../db');
 
 class userController{
     async createUser(req, res){
@@ -9,7 +9,6 @@ class userController{
                 res.send('nik zanyat');
             } else {
                 const newUser = await db.query('INSERT INTO usertable (username) values ($1) RETURNING *', [userName]);
-                const newUserInfo = await db.query('INSERT INTO userinfo (pots_amount, pots_use, cabbage_amount, cabbage_total, carrot_amount, carrot_total) values ($1,$2,$3,$4,$5,$6) RETURNING *', [10, 0, 0 ,0, 0, 0,]);
                 res.send('good');
             }
         } catch(e){
