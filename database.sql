@@ -38,6 +38,7 @@ create TABLE user_achievement_completed(
     FOREIGN KEY (ach_id) 
     REFERENCES achievement (id)  
     ON DELETE CASCADE
+
 );
 
 

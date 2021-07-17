@@ -57,13 +57,16 @@ class achievementController{
         // try {
             const {ach_id} = req.body;
             const {user_id} = req.body;
-            const ach_completed = await db.query(`SELECT * FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
-            const ach_progress = await db.query(`SELECT progress FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
-            const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
-
+            // const ach_completed={
+            //     rows:[3]
+            // }
             const {progress_increasing} = req.body;
 
-            // const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
+            const ach_progress = await db.query(`SELECT progress FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
+            const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
+            const ach_completed = await db.query(`SELECT * FROM user_achievement_completed WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
+
+
             
             if(ach_completed.rows.length){
                 res.send('already completed');
@@ -73,13 +76,14 @@ class achievementController{
 
             if(ach_progress.rows.length){
                 let increased = parseInt(ach_progress.rows[0].progress) + parseInt(progress_increasing);
+                console.log(increased)
                 // let completed  = increased >= goal.rows[0].goal ? true : false;
                 if (increased >= goal.rows[0].goal){
                     await db.query('DELETE FROM  user_achievement_progress where user_id = $1 AND ach_id = $2', [user_id, ach_id]);
                     await db.query('INSERT INTO  user_achievement_completed   (user_id, ach_id) values($1,$2)', [user_id, ach_id]);
     
                 }else{
-                    await db.query('UPDATE user_achievement_progress set progress=$1 where user_id = $3 AND ach_id = $4  ', [increased, user_id, ach_id]);
+                    await db.query('UPDATE user_achievement_progress set progress=$1 where user_id = $2 AND ach_id = $3', [increased, user_id, ach_id]);
                 }
 
                 res.send('obnovleno')
