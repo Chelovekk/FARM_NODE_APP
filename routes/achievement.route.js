@@ -8,6 +8,8 @@ router.post ('/achievementgetprogres', achievementController.getAchievementProgr
 router.get ('/achievementall', achievementController.getAllAchievement);
 router.post ('/achievementincrease', achievementController.increaseAchievementProgress);
 router.post ('/achievementallprogress', achievementController.getAllAchievementProgress);
+router.get ('/test', achievementController.test);
+
 
 
 

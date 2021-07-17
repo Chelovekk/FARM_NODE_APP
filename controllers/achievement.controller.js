@@ -29,7 +29,7 @@ class achievementController{
     async getAchievementProgress(req,res){
         //зделать проверки
         
-        try{
+        // try{
             const {ach_id} = req.body;
             const {user_id} = req.body;
             const ach = await db.query(`SELECT name FROM achievement WHERE id = $1`, [ach_id]);
@@ -39,65 +39,93 @@ class achievementController{
             if(progress.rows.length){
                 var progresInfo = progress.rows[0].progress;
             }else{
-                var progresInfo = 0;
+                var progresInfo = 'no progres';
             }
+            console.log(progress.rows[0])
             const sendInfo = {
                 ach_name: ach.rows[0].name,
                 ach_goal: goal.rows[0].goal,
-                ach_progress: progresInfo,
-                ach_completed: progress.rows[0].comleted
-
+                ach_progress: progresInfo 
             }
             res.send(sendInfo);
-        }catch(e){
-            res.send(e);
-        }
+        // }catch(e){
+        //     res.send(e);
+        // }
     }
     async increaseAchievementProgress(req,res){
-        //add achievement cheking
-        //зделать проверки
-//добавить проверку на выполнение
-        try {
+        // add achievement cheking
+        // try {
             const {ach_id} = req.body;
             const {user_id} = req.body;
+            const ach_completed = await db.query(`SELECT * FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
+            const ach_progress = await db.query(`SELECT progress FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
+            const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
+
             const {progress_increasing} = req.body;
 
-            const ach_progress = await db.query(`SELECT progress FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
-            // console.log(ach_progress)
-            const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
+            // const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
+            
+            if(ach_completed.rows.length){
+                res.send('already completed');
+                return
+            }
+
+
             if(ach_progress.rows.length){
                 let increased = parseInt(ach_progress.rows[0].progress) + parseInt(progress_increasing);
-                const updateAch = await db.query('UPDATE user_achievement_progress set progress=$1 where user_id = $2 AND ach_id = $3  RETURNING *', [increased, user_id, ach_id]);
-                res.send(updateAch)
+                // let completed  = increased >= goal.rows[0].goal ? true : false;
+                if (increased >= goal.rows[0].goal){
+                    await db.query('DELETE FROM  user_achievement_progress where user_id = $1 AND ach_id = $2', [user_id, ach_id]);
+                    await db.query('INSERT INTO  user_achievement_completed   (user_id, ach_id) values($1,$2)', [user_id, ach_id]);
+    
+                }else{
+                    await db.query('UPDATE user_achievement_progress set progress=$1 where user_id = $3 AND ach_id = $4  ', [increased, user_id, ach_id]);
+                }
+
+                res.send('obnovleno')
             }else{
-                
-                const newAch = await db.query('INSERT INTO user_achievement_progress (user_id, ach_id, progress) values ($1, $2, $3) RETURNING *', [user_id, ach_id, progress_increasing]);
-                res.send(newAch)
+                // let completed  = progress_increasing >= goal.rows[0].goal ? true : false;
+                if (progress_increasing >= goal.rows[0].goal){
+                    await db.query('INSERT INTO  user_achievement_completed  (user_id, ach_id) values($1,$2)', [user_id, ach_id]);
+    
+                }else{
+                    await db.query('INSERT INTO user_achievement_progress (user_id, ach_id, progress) values ($1, $2, $3)', [user_id, ach_id, progress_increasing]);
+                }
+                res.send('sozdano')
             }
-        } catch (e) {
-            console.log('errre')
-            res.send(e)
-        }
+        // } catch (e) {
+        //     console.log('errre')
+        //     res.send(e)
+        // }
     }
     async getAllAchievementProgress(req,res){
         //зделать фильтер для поиска goal
         const {user_id} = req.body;
         const ach = await db.query(`SELECT * FROM achievement`);
+        const goal = await db.query(`SELECT * FROM achievementgoals`);
+        console.log(goal)
         const progress = await db.query(`SELECT * FROM user_achievement_progress WHERE user_id = $1`, [user_id]);
         var resultMass = [];
             for(let i = 0; i<ach.rows.length;i++){
-                // console.log(ach.rows[i])
                 let someProgressOfAchievements = (progress.rows.filter(x=>x.ach_id == ach.rows[i].id));
-                // console.log(massWithOneEntry)
-                if(massWithOneEntry.length){
+                let someGoalOfAchievements = (goal.rows.filter(x=>x.ach_id == ach.rows[i].id));
+
+                if(someProgressOfAchievements.length){
                     resultMass.push({
                         name: ach.rows[i].name,
+                        goal:someGoalOfAchievements[0].goal,
                         progress: someProgressOfAchievements[0].progress,
                         completed: someProgressOfAchievements[0].comleted
                     })
                     
                 } else{
-                    console.log(5)
+                    resultMass.push({
+                        name: ach.rows[i].name,
+                        goal: someGoalOfAchievements[0].goal,
+                        progress: "no progress",
+                        completed: false
+                    })
+
                 }
             }
             
@@ -113,6 +141,11 @@ class achievementController{
         } catch (e) {
             res.send(e)
         }
+    }
+    async test(req,res){
+        const ach_completed = await db.query(`SELECT * FROM user_achievement_completed WHERE user_id = $1 AND ach_id=$2 `, [2, 9]);
+
+        res.send(ach_completed)
     }
     
     

@@ -28,6 +28,17 @@ create TABLE user_achievement_progress(
     REFERENCES achievement (id)  
     ON DELETE CASCADE
 );
+create TABLE user_achievement_completed(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    FOREIGN KEY (user_id) 
+    REFERENCES usertable (id)
+    ON DELETE CASCADE,
+    ach_id INTEGER,
+    FOREIGN KEY (ach_id) 
+    REFERENCES achievement (id)  
+    ON DELETE CASCADE
+);
 
 
 ////////////////////
