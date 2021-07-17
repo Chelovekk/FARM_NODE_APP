@@ -54,9 +54,6 @@ class achievementController{
         }
     }
     async increaseAchievementProgress(req,res){
-        //add achievement cheking
-        //зделать проверки
-//добавить проверку на выполнение
         try {
             const {ach_id} = req.body;
             const {user_id} = req.body;
@@ -65,35 +62,40 @@ class achievementController{
             const ach_progress = await db.query(`SELECT progress FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
             // console.log(ach_progress)
             const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
-            if(ach_progress.rows.length){
+            if(ach_progress.rows[0].comleted) {
+                res.send('achievement completed')
+                return
+            }else if(ach_progress.rows.length){
                 let increased = parseInt(ach_progress.rows[0].progress) + parseInt(progress_increasing);
-                const updateAch = await db.query('UPDATE user_achievement_progress set progress=$1 where user_id = $2 AND ach_id = $3  RETURNING *', [increased, user_id, ach_id]);
+                let completed  = increased >= goal.rows[0].goal ? true : false;
+                const updateAch = await db.query('UPDATE user_achievement_progress set progress=$1, comleted=$2 where user_id = $3 AND ach_id = $4 RETURNING *', [increased,completed, user_id, ach_id]);
                 res.send(updateAch)
             }else{
-                
-                const newAch = await db.query('INSERT INTO user_achievement_progress (user_id, ach_id, progress) values ($1, $2, $3) RETURNING *', [user_id, ach_id, progress_increasing]);
-                res.send(newAch)
+                let completed  = progress_increasing >= goal.rows[0].goal ? true : false;
+                const newAch = await db.query('INSERT INTO user_achievement_progress (user_id, ach_id, progress, comleted) values ($1, $2, $3, $4) RETURNING *', [user_id, ach_id, progress_increasing, completed]);
+                res.send(newAch)                
             }
         } catch (e) {
-            console.log('errre')
-            res.send(e)
+            res.send("somethings gone wrong ",e)
         }
     }
     async getAllAchievementProgress(req,res){
         //зделать фильтер для поиска goal
         const {user_id} = req.body;
         const ach = await db.query(`SELECT * FROM achievement`);
+        const goal = await db.query(`SELECT * FROM achievementgoals`);
         const progress = await db.query(`SELECT * FROM user_achievement_progress WHERE user_id = $1`, [user_id]);
         var resultMass = [];
             for(let i = 0; i<ach.rows.length;i++){
                 // console.log(ach.rows[i])
                 let someProgressOfAchievements = (progress.rows.filter(x=>x.ach_id == ach.rows[i].id));
-                // console.log(massWithOneEntry)
-                if(massWithOneEntry.length){
+                let someGoalOfAchievements = (goal.rows.filter(x=>x.ach_id == ach.rows[i].id));
+                if(someProgressOfAchievements.length){
                     resultMass.push({
                         name: ach.rows[i].name,
                         progress: someProgressOfAchievements[0].progress,
-                        completed: someProgressOfAchievements[0].comleted
+                        completed: someProgressOfAchievements[0].comleted,
+                        goal:someGoalOfAchievements[0].goal,
                     })
                     
                 } else{
@@ -108,8 +110,19 @@ class achievementController{
     }
     async getAllAchievement(req, res){
         try {
-            const achievements = await db.query('SELECT * FROM achievement');
-            res.json(achievements.rows);
+            const ach = await db.query('SELECT * FROM achievement');
+            const goal = await db.query(`SELECT * FROM achievementgoals`);
+            const allAchievements = []
+            for(let i = 0; i<ach.rows.length;i++){
+                let someGoalOfAchievements = (goal.rows.filter(x=>x.ach_id == ach.rows[i].id));
+                allAchievements.push({
+                    id: ach.rows[i].id,
+                    name: ach.rows[i].name,
+                    goal:someGoalOfAchievements[0].goal
+                })
+            }
+
+            res.json(allAchievements);
         } catch (e) {
             res.send(e)
         }
