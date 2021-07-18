@@ -41,35 +41,32 @@ class achievementController{
 
 //   api/achievementincrease
     async increaseAchievementProgress(req,res){
-        try {
+        // try {
          //получение данных из тела
             const {ach_id} = req.body;
             const {user_id} = req.body;
             const {progress_increasing} = req.body;
 
              //получение даннх в таблиц данных из таблиц 
-            const ach_progress = await db.query(`SELECT progress, completed FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
-            const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
-            
-
+            const ach_progress_goal = await db.query('SELECT pp.progress, pp.completed, p.goal FROM user_achievement_progress pp JOIN achievementgoals p ON p.ach_id=pp.ach_id WHERE pp.ach_id=$1 and pp.user_id =$2', [ach_id, user_id])
             //проверка и создание данных для отправки
-            if(ach_progress.rows.length && ach_progress.rows[0].completed) {
+            if(ach_progress_goal.rows.length && ach_progress_goal.rows[0].completed) {
                 res.send('achievement completed')
                 return
-            } else if(ach_progress.rows.length){
+            } else if(ach_progress_goal.rows.length){
                 
-                let increased = parseInt(ach_progress.rows[0].progress) + parseInt(progress_increasing);
-                let completed  = increased >= goal.rows[0].goal ? true : false;
+                let increased = parseInt(ach_progress_goal.rows[0].progress) + parseInt(progress_increasing);
+                let completed  = increased >= ach_progress_goal.rows[0].goal ? true : false;
                 const updateAch = await db.query('UPDATE user_achievement_progress set progress=$1, completed=$2 where user_id = $3 AND ach_id = $4 RETURNING *', [increased,completed, user_id, ach_id]);
                 res.send(updateAch)
             }else{
-                let completed  = progress_increasing >= goal.rows[0].goal ? true : false;
+                let completed  = progress_increasing >= ach_progress_goal.rows[0].goal ? true : false;
                 const newAch = await db.query('INSERT INTO user_achievement_progress (user_id, ach_id, progress, completed) values ($1, $2, $3, $4) RETURNING *', [user_id, ach_id, progress_increasing, completed]);
                 res.send(newAch)                
             }
-        } catch (e) {
-            res.send("somethings gone wrong ")
-        }
+        // } catch (e) {
+        //     res.send("somethings gone wrong ")
+        // }
     }
     // api/achievementgetprogres
     async getAchievementProgress(req,res){        
