@@ -22,8 +22,6 @@ class achievementController{
         const {ach_id} = req.body;
 
         //получение даннх в таблицы данных из таблиц 
-        const ach = await db.query(`SELECT name FROM achievement WHERE id = $1`, [ach_id]);
-        const goal = await db.query(`SELECT goal FROM achievementgoals WHERE ach_id = $1`, [ach_id]);
         const data  = await db.query('SELECT pp.name, p.goal  FROM  achievement pp left  JOIN achievementgoals p ON p.ach_id=pp.id where pp.id=$1', [ach_id]);
         
         res.send(data)
