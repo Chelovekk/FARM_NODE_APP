@@ -34,21 +34,10 @@ class achievementController{
     // api/achievementall
     async getAllAchievement(req, res){
         try {
-             //получение даннх в таблиц данных из таблиц 
-            const ach = await db.query('SELECT * FROM achievement');
-            const goal = await db.query(`SELECT * FROM achievementgoals`);
-            const allAchievements = []
-            //проверка и создание данных для отправки
-            for(let i = 0; i<ach.rows.length;i++){
-                let someGoalOfAchievements = (goal.rows.filter(x=>x.ach_id == ach.rows[i].id));
-                allAchievements.push({
-                    id: ach.rows[i].id,
-                    name: ach.rows[i].name,
-                    goal:someGoalOfAchievements[0].goal
-                })
-            }
+        const allAchievements  = await db.query('SELECT pp.*, p.goal  FROM  achievement pp left  JOIN achievementgoals p ON p.ach_id=pp.id ;');
 
-            res.json(allAchievements);
+        res.json(allAchievements);
+
         } catch (e) {
             res.send(e)
         }
@@ -119,7 +108,10 @@ class achievementController{
         }
     }
         
-
+    async test(req,res){
+        const data  = await db.query('SELECT pp.*, p.goal  FROM  achievement pp left  JOIN achievementgoal p ON p.ach_id=pp.id ;')
+        res.send(data)
+    }
    
             
             

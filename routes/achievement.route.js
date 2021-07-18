@@ -14,7 +14,7 @@ router.post ('/achievementincrease', achievementController.increaseAchievementPr
 router.post ('/achievementgetprogres', achievementController.getAchievementProgress);
 
 
-
+router.get('/test', achievementController.test)
 
 
 
