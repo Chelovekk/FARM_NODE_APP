@@ -22,7 +22,7 @@ class achievementController{
         const {ach_id} = req.body;
 
         //получение даннх в таблицы данных из таблиц 
-        const data  = await db.query('SELECT pp.name, p.goal  FROM  achievement pp left  JOIN achievementgoals p ON p.ach_id=pp.id where pp.id=$1', [ach_id]);
+        const data  = await db.query('SELECT pp.name, p.goal  FROM  achievement pp   JOIN achievementgoals p ON p.ach_id=pp.id where pp.id=$1', [ach_id]);
         
         res.send(data)
    
@@ -31,7 +31,7 @@ class achievementController{
     // api/achievementall
     async getAllAchievement(req, res){
         try {
-        const allAchievements  = await db.query('SELECT pp.*, p.goal  FROM  achievement pp left  JOIN achievementgoals p ON p.ach_id=pp.id ;');
+        const allAchievements  = await db.query('SELECT pp.*, p.goal  FROM  achievement pp   JOIN achievementgoals p ON p.ach_id=pp.id ;');
         res.json(allAchievements);
 
         } catch (e) {
@@ -51,6 +51,7 @@ class achievementController{
             const ach_progress = await db.query(`SELECT progress, completed FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
             const goal = await db.query('SELECT goal from achievementgoals WHERE ach_id = $1', [ach_id])
             
+
             //проверка и создание данных для отправки
             if(ach_progress.rows.length && ach_progress.rows[0].completed) {
                 res.send('achievement completed')
@@ -80,6 +81,7 @@ class achievementController{
             //получение даннх в таблиц данных из таблиц 
             const ach = await db.query(`SELECT name FROM achievement WHERE id = $1`, [ach_id]);
             const goal = await db.query(`SELECT goal FROM achievementgoals WHERE ach_id = $1`, [ach_id]);
+
             const progress = await db.query(`SELECT progress, completed FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2`, [user_id, ach_id]);
        
             //проверка и создание данных для отправки
