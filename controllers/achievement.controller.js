@@ -106,47 +106,40 @@ class achievementController{
         }
     }
         
-    // api/achievementgetprogres
-    async getAchievementProgress(req,res){        
-        try{
-         //получение данных из тела
-            const {ach_id} = req.body;
-            const {user_id} = req.body;
-           
-            //получение даннх в таблиц данных из таблиц 
-            const ach = await db.query('SELECT name FROM achievement WHERE id = $1', [ach_id]);
-            const goal = await db.query('SELECT goal FROM achievementgoals WHERE ach_id = $1', [ach_id]);
-            const progress = await db.query('SELECT progress, completed FROM user_achievement_progress WHERE user_id = $1 AND ach_id=$2', [user_id, ach_id]);
-       
-            //проверка и создание данных для отправки
-            if(progress.rows.length){
-                var progresInfo = progress.rows[0].progress;
-                var completed = progress.rows[0].completed;
-            }else{
-                var progresInfo = 0;
-                var completed = false;
+    async getAllAchievementProgress(req,res){
+        //зделать фильтер для поиска goal
+        const {user_id} = req.body;
+        const ach = await db.query(`SELECT * FROM achievement`);
+        const goal = await db.query(`SELECT * FROM achievementgoals`);
+        console.log(goal)
+        const progress = await db.query(`SELECT * FROM user_achievement_progress WHERE user_id = $1`, [user_id]);
+        var resultMass = [];
+            for(let i = 0; i<ach.rows.length;i++){
+                let someProgressOfAchievements = (progress.rows.filter(x=>x.ach_id == ach.rows[i].id));
+                let someGoalOfAchievements = (goal.rows.filter(x=>x.ach_id == ach.rows[i].id));
 
+                if(someProgressOfAchievements.length){
+                    resultMass.push({
+                        name: ach.rows[i].name,
+                        goal:someGoalOfAchievements[0].goal,
+                        progress: someProgressOfAchievements[0].progress,
+                        completed: someProgressOfAchievements[0].comleted
+                    })
+                    
+                } else{
+                    resultMass.push({
+                        name: ach.rows[i].name,
+                        goal: someGoalOfAchievements[0].goal,
+                        progress: "no progress",
+                        completed: false
+                    })
+
+                }
             }
-            const sendInfo = {
-                ach_name: ach.rows[0].name,
-                ach_goal: goal.rows[0].goal,
-                ach_progress: progresInfo,
-                ach_completed: completed
-
-            }
-            res.send(sendInfo);
-        }catch(e){
-            res.send(e);
-        }
-    }
             
-            
-       
-
-      
+            res.send(resultMass)
     
-    
-    
+}
 }
 
 module.exports = new achievementController;
