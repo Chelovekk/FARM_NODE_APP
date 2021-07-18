@@ -118,41 +118,14 @@ class achievementController{
             res.send(e);
         }
     }
+        
 
-
-    //api/achievementallprogress    
-    async getAllAchievementProgress(req,res){
-        const {user_id} = req.body;
-        const ach = await db.query(`SELECT * FROM achievement`);
-        const goal = await db.query(`SELECT * FROM achievementgoals`);
-        const progress = await db.query(`SELECT * FROM user_achievement_progress WHERE user_id = $1`, [user_id]);
-        var resultMass = [];
-            for(let i = 0; i<ach.rows.length;i++){
-                let someProgressOfAchievements = (progress.rows.filter(x=>x.ach_id == ach.rows[i].id));
-                let someGoalOfAchievements = (goal.rows.filter(x=>x.ach_id == ach.rows[i].id));
-                if(someProgressOfAchievements.length){
-                    resultMass.push({
-                        name: ach.rows[i].name,
-                        progress: someProgressOfAchievements[0].progress,
-                        completed: someProgressOfAchievements[0].completed,
-                        goal:someGoalOfAchievements[0].goal,
-                    })
-                    
-                } else{
-                    resultMass.push({
-                        name: ach.rows[i].name,
-                        progress: 0,
-                        completed: false,
-                        goal:someGoalOfAchievements[0].goal,
-                    })
-                }
-            }
+   
             
             
        
 
-        res.send(resultMass)
-    }
+      
     
     
     
